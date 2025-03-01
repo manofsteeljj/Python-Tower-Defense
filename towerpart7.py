@@ -57,7 +57,7 @@ path = [(WIDTH // 10, 0), (WIDTH // 10, HEIGHT // 2.5), (WIDTH // 2.5, HEIGHT //
 # Tower Data
 TOWER_TYPES = [
     {"name": "Basic Tower", "cost": 100, "range": 100, "fire_rate": 0.05, "damage": 1, "color": BLUE, "image": basic_tower_image, "weapon_shooting_image": weapon_shooting_image, "weapon_idle_image": weapon_idle_image},  
-    {"name": "Sniper Tower", "cost": 200, "range": 200, "fire_rate": 0.005, "damage": 3, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
+    {"name": "Sniper Tower", "cost": 200, "range": 300, "fire_rate": 0.01, "damage": 3, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
     {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.5, "color": GREEN, "image": rapid_tower_image, "weapon_shooting_image": rapid_weapon_shooting_image, "weapon_idle_image": rapid_weapon_idle_image},
     {"name": "Splash Tower", "cost": 250, "range": 120, "fire_rate": 0.015, "damage": 2, "color": SAND, "image": splash_tower_image, "weapon_shooting_image": splash_weapon_shooting_image, "weapon_idle_image": splash_weapon_idle_image},
     {"name": "Freeze Tower", "cost": 300, "range": 90, "fire_rate": 0.02, "damage": 1, "color": PURPLE, "image": freeze_tower_image, "weapon_shooting_image": freeze_weapon_shooting_image, "weapon_idle_image": freeze_weapon_idle_image}
@@ -75,6 +75,21 @@ bullets = []
 game_over = False
 paused = False
 in_menu = True
+
+# Define tower slots
+tower_slots = [
+    (WIDTH // 10 - 50, HEIGHT // 2.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT // 2.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT * 0.8 - 50),
+    (WIDTH * 0.7 - 50, HEIGHT * 0.8 - 50),
+    (WIDTH // 10 - 50, HEIGHT // 3.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT // 3.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT * 0.6 - 50),
+    (WIDTH * 0.7 - 50, HEIGHT * 0.6 - 50)
+]
+
+# Track which slots are occupied
+occupied_slots = [False] * len(tower_slots)
 
 class Enemy:
     def __init__(self, delay):
@@ -175,6 +190,9 @@ def draw_pause_menu():
 running = True
 start_button, exit_button = draw_menu()
 
+# Define delete button
+delete_button = pygame.Rect(WIDTH - 150, HEIGHT - 100, 100, 50)
+
 while running:
     if in_menu:
         for event in pygame.event.get():
@@ -232,10 +250,21 @@ while running:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if selected_tower and money >= selected_tower["cost"]:
-                    if event.pos[0] < WIDTH - 200:  # Ensure tower is placed within the game area
-                        towers.append({"pos": event.pos, "type": selected_tower, "shooting": False})
-                        money -= selected_tower["cost"]
-                        selected_tower = None
+                    for i, slot in enumerate(tower_slots):
+                        slot_rect = pygame.Rect(slot[0], slot[1], 50, 50)
+                        if slot_rect.collidepoint(event.pos) and not occupied_slots[i]:
+                            towers.append({"pos": slot, "type": selected_tower, "shooting": False})
+                            money -= selected_tower["cost"]
+                            selected_tower = None
+                            occupied_slots[i] = True
+                            break
+                elif delete_button.collidepoint(event.pos):
+                    for i, tower in enumerate(towers):
+                        tower_rect = pygame.Rect(tower["pos"][0], tower["pos"][1], 50, 50)
+                        if tower_rect.collidepoint(event.pos):
+                            occupied_slots[tower_slots.index(tower["pos"])] = False
+                            towers.pop(i)
+                            break
                 else:
                     for i, button in enumerate(tower_buttons):
                         if button.collidepoint(event.pos):
@@ -267,21 +296,22 @@ while running:
                 pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 20)
             
             if random.random() < tower["type"]["fire_rate"] and any(enemy.alive for enemy in enemies):
-                target = random.choice([e for e in enemies if e.alive])
-                if tower["type"]["name"] == "Sniper Tower":
-                    bullet_color = RED
-                    bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color, speed=10, is_sniper=True))
-                else:
-                    if tower["type"]["name"] == "Rapid Tower":
-                        bullet_color = GREEN
-                    elif tower["type"]["name"] == "Splash Tower":
-                        bullet_color = SAND
-                    elif tower["type"]["name"] == "Freeze Tower":
-                        bullet_color = PURPLE
+                target = next((e for e in enemies if e.alive), None)  # Select the first alive enemy
+                if target:
+                    if tower["type"]["name"] == "Sniper Tower":
+                        bullet_color = RED
+                        bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color, speed=10, is_sniper=True))
                     else:
-                        bullet_color = BLUE
-                    bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color))
-                tower["shooting"] = True
+                        if tower["type"]["name"] == "Rapid Tower":
+                            bullet_color = GREEN
+                        elif tower["type"]["name"] == "Splash Tower":
+                            bullet_color = SAND
+                        elif tower["type"]["name"] == "Freeze Tower":
+                            bullet_color = PURPLE
+                        else:
+                            bullet_color = BLUE
+                        bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color))
+                    tower["shooting"] = True
             else:
                 tower["shooting"] = False
         
@@ -300,6 +330,14 @@ while running:
             text = font.render(f'{tower["name"]} ${tower["cost"]}', True, (0, 0, 0))
             text_rect = text.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
             screen.blit(text, text_rect)
+        
+        # Draw tower slots
+        for slot in tower_slots:
+            pygame.draw.rect(screen, GRAY, (slot[0], slot[1], 50, 50), 2)
+        
+        # Draw delete button
+        pygame.draw.rect(screen, RED, delete_button)
+        screen.blit(font.render("Delete", True, WHITE), (delete_button.x + 10, delete_button.y + 10))
         
         pygame.display.flip()
         pygame.time.delay(30)
