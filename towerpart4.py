@@ -102,7 +102,13 @@ class Bullet:
         if self.active:
             pygame.draw.circle(screen, BLUE, (int(self.pos[0]), int(self.pos[1])), 5)
 
+def spawn_enemies():
+    for i in range(enemies_per_wave):
+        enemies.append(Enemy(i * 40))  # Increased delay to add space between enemies
+
 running = True
+spawn_enemies()  # Initial spawn of enemies
+
 while running:
     screen.fill(WHITE)
     
@@ -131,11 +137,6 @@ while running:
                     if button.collidepoint(event.pos):
                         selected_tower = TOWER_TYPES[i]
     
-    if not any(enemy.alive for enemy in enemies):
-        wave += 1
-        enemies_per_wave = int(enemies_per_wave * 1.5)
-        enemies = [Enemy(i * 30) for i in range(enemies_per_wave)]
-    
     for enemy in enemies[:]:
         if enemy.alive:
             enemy.move()
@@ -143,8 +144,13 @@ while running:
         else:
             enemies.remove(enemy)
     
+    if not enemies and not game_over:
+        wave += 1
+        enemies_per_wave += 2  # Increase the number of enemies per wave
+        spawn_enemies()
+    
     for tower in towers:
-        pygame.draw.circle(screen, GREEN, tower["pos"], 10)
+        pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 10)
         if random.random() < tower["type"]["fire_rate"] and any(enemy.alive for enemy in enemies):
             target = random.choice([e for e in enemies if e.alive])
             bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"]))
@@ -159,8 +165,9 @@ while running:
     
     for i, tower in enumerate(TOWER_TYPES):
         rect = tower_buttons[i]
-        pygame.draw.rect(screen, (200, 200, 200), rect)
-        screen.blit(font.render(tower["name"], True, (0, 0, 0)), (rect.x + 5, rect.y + 10))
+        pygame.draw.rect(screen, tower["color"], rect)
+        text = font.render(f'{tower["name"]} ${tower["cost"]}', True, (0, 0, 0))
+        screen.blit(text, (rect.x + 5, rect.y + 10))
     
     pygame.display.flip()
     pygame.time.delay(30)
