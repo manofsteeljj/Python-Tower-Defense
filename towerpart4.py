@@ -15,12 +15,15 @@ GRAY = (150, 150, 150)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tower Defense")
 
+# Load images
+basic_tower_image = pygame.image.load('assets/Blue/Bodies/body_tracks.png')
+
 # Enemy Path (Waypoints)
 path = [(50, 0), (50, 200), (200, 200), (200, 400), (350, 400), (350, HEIGHT)]
 
 # Tower Data
 TOWER_TYPES = [
-    {"name": "Basic Tower", "cost": 100, "range": 100, "fire_rate": 0.05, "damage": 1, "color": (0, 255, 0)},  
+    {"name": "Basic Tower", "cost": 100, "range": 100, "fire_rate": 0.05, "damage": 1, "color": (0, 255, 0), "image": basic_tower_image},  
     {"name": "Sniper Tower", "cost": 200, "range": 200, "fire_rate": 0.005, "damage": 3, "color": (255, 0, 0)},
     {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.5, "color": (0, 0, 255)},
     {"name": "Splash Tower", "cost": 250, "range": 120, "fire_rate": 0.015, "damage": 2, "color": (255, 165, 0)},
@@ -150,7 +153,10 @@ while running:
         spawn_enemies()
     
     for tower in towers:
-        pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 10)
+        if "image" in tower["type"]:
+            screen.blit(tower["type"]["image"], (tower["pos"][0] - tower["type"]["image"].get_width() // 2, tower["pos"][1] - tower["type"]["image"].get_height() // 2))
+        else:
+            pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 10)
         if random.random() < tower["type"]["fire_rate"] and any(enemy.alive for enemy in enemies):
             target = random.choice([e for e in enemies if e.alive])
             bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"]))
