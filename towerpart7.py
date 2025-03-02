@@ -57,8 +57,8 @@ path = [(WIDTH // 10, 0), (WIDTH // 10, HEIGHT // 2.5), (WIDTH // 2.5, HEIGHT //
 # Tower Data
 TOWER_TYPES = [
     {"name": "Basic Tower", "cost": 100, "range": 100, "fire_rate": 0.05, "damage": 1, "color": BLUE, "image": basic_tower_image, "weapon_shooting_image": weapon_shooting_image, "weapon_idle_image": weapon_idle_image},  
-    {"name": "Sniper Tower", "cost": 200, "range": 300, "fire_rate": 0.01, "damage": 10, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
-    {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.8, "color": GREEN, "image": rapid_tower_image, "weapon_shooting_image": rapid_weapon_shooting_image, "weapon_idle_image": rapid_weapon_idle_image},
+    {"name": "Sniper Tower", "cost": 200, "range": 300, "fire_rate": 0.01, "damage": 3, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
+    {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.5, "color": GREEN, "image": rapid_tower_image, "weapon_shooting_image": rapid_weapon_shooting_image, "weapon_idle_image": rapid_weapon_idle_image},
     {"name": "Splash Tower", "cost": 250, "range": 120, "fire_rate": 0.015, "damage": 2, "color": SAND, "image": splash_tower_image, "weapon_shooting_image": splash_weapon_shooting_image, "weapon_idle_image": splash_weapon_idle_image},
     {"name": "Freeze Tower", "cost": 300, "range": 90, "fire_rate": 0.02, "damage": 1, "color": PURPLE, "image": freeze_tower_image, "weapon_shooting_image": freeze_weapon_shooting_image, "weapon_idle_image": freeze_weapon_idle_image}
 ]
