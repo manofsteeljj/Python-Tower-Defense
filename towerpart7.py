@@ -85,7 +85,11 @@ tower_slots = [
     (WIDTH // 10 - 50, HEIGHT // 3.5 - 50),
     (WIDTH // 2.5 - 50, HEIGHT // 3.5 - 50),
     (WIDTH // 2.5 - 50, HEIGHT * 0.6 - 50),
-    (WIDTH * 0.7 - 50, HEIGHT * 0.6 - 50)
+    (WIDTH * 0.7 - 50, HEIGHT * 0.6 - 50),
+    (WIDTH // 10 - 50, HEIGHT // 4.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT // 4.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT * 0.4 - 50),
+    (WIDTH * 0.7 - 50, HEIGHT * 0.4 - 50)
 ]
 
 # Track which slots are occupied
@@ -190,9 +194,6 @@ def draw_pause_menu():
 running = True
 start_button, exit_button = draw_menu()
 
-# Define delete button
-delete_button = pygame.Rect(WIDTH - 150, HEIGHT - 100, 100, 50)
-
 while running:
     if in_menu:
         for event in pygame.event.get():
@@ -252,18 +253,16 @@ while running:
                 if selected_tower and money >= selected_tower["cost"]:
                     for i, slot in enumerate(tower_slots):
                         slot_rect = pygame.Rect(slot[0], slot[1], 50, 50)
-                        if slot_rect.collidepoint(event.pos) and not occupied_slots[i]:
+                        if slot_rect.collidepoint(event.pos):
+                            # Replace the tower if the slot is already occupied
+                            for j, tower in enumerate(towers):
+                                if tower["pos"] == slot:
+                                    towers.pop(j)
+                                    break
                             towers.append({"pos": slot, "type": selected_tower, "shooting": False})
                             money -= selected_tower["cost"]
                             selected_tower = None
                             occupied_slots[i] = True
-                            break
-                elif delete_button.collidepoint(event.pos):
-                    for i, tower in enumerate(towers):
-                        tower_rect = pygame.Rect(tower["pos"][0], tower["pos"][1], 50, 50)
-                        if tower_rect.collidepoint(event.pos):
-                            occupied_slots[tower_slots.index(tower["pos"])] = False
-                            towers.pop(i)
                             break
                 else:
                     for i, button in enumerate(tower_buttons):
@@ -334,10 +333,6 @@ while running:
         # Draw tower slots
         for slot in tower_slots:
             pygame.draw.rect(screen, GRAY, (slot[0], slot[1], 50, 50), 2)
-        
-        # Draw delete button
-        pygame.draw.rect(screen, RED, delete_button)
-        screen.blit(font.render("Delete", True, WHITE), (delete_button.x + 10, delete_button.y + 10))
         
         pygame.display.flip()
         pygame.time.delay(30)
