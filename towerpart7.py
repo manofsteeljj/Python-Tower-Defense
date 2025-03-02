@@ -57,8 +57,8 @@ path = [(WIDTH // 10, 0), (WIDTH // 10, HEIGHT // 2.5), (WIDTH // 2.5, HEIGHT //
 # Tower Data
 TOWER_TYPES = [
     {"name": "Basic Tower", "cost": 100, "range": 100, "fire_rate": 0.05, "damage": 1, "color": BLUE, "image": basic_tower_image, "weapon_shooting_image": weapon_shooting_image, "weapon_idle_image": weapon_idle_image},  
-    {"name": "Sniper Tower", "cost": 200, "range": 300, "fire_rate": 0.01, "damage": 3, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
-    {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.5, "color": GREEN, "image": rapid_tower_image, "weapon_shooting_image": rapid_weapon_shooting_image, "weapon_idle_image": rapid_weapon_idle_image},
+    {"name": "Sniper Tower", "cost": 200, "range": 300, "fire_rate": 0.01, "damage": 10, "color": RED, "image": sniper_tower_image, "weapon_shooting_image": sniper_weapon_shooting_image, "weapon_idle_image": sniper_weapon_idle_image},
+    {"name": "Rapid Tower", "cost": 150, "range": 80, "fire_rate": 0.05, "damage": 0.8, "color": GREEN, "image": rapid_tower_image, "weapon_shooting_image": rapid_weapon_shooting_image, "weapon_idle_image": rapid_weapon_idle_image},
     {"name": "Splash Tower", "cost": 250, "range": 120, "fire_rate": 0.015, "damage": 2, "color": SAND, "image": splash_tower_image, "weapon_shooting_image": splash_weapon_shooting_image, "weapon_idle_image": splash_weapon_idle_image},
     {"name": "Freeze Tower", "cost": 300, "range": 90, "fire_rate": 0.02, "damage": 1, "color": PURPLE, "image": freeze_tower_image, "weapon_shooting_image": freeze_weapon_shooting_image, "weapon_idle_image": freeze_weapon_idle_image}
 ]
@@ -89,17 +89,26 @@ tower_slots = [
     (WIDTH // 10 - 50, HEIGHT // 4.5 - 50),
     (WIDTH // 2.5 - 50, HEIGHT // 4.5 - 50),
     (WIDTH // 2.5 - 50, HEIGHT * 0.4 - 50),
-    (WIDTH * 0.7 - 50, HEIGHT * 0.4 - 50)
+    (WIDTH * 0.7 - 50, HEIGHT * 0.4 - 50),
+    (WIDTH // 10 - 50, HEIGHT // 1.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT // 1.5 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT * 0.2 - 50),
+    (WIDTH * 0.7 - 50, HEIGHT * 0.2 - 50),
+    (WIDTH // 10 - 50, HEIGHT // 1.2 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT // 1.2 - 50),
+    (WIDTH // 2.5 - 50, HEIGHT * 0.1 - 50),
+    (WIDTH * 0.7 - 50, HEIGHT * 0.1 - 50)
 ]
 
 # Track which slots are occupied
 occupied_slots = [False] * len(tower_slots)
 
 class Enemy:
-    def __init__(self, delay):
+    def __init__(self, delay, hp):
         self.path_index = 0
         self.rect = pygame.Rect(path[0][0], path[0][1] - delay, 40, 40)
-        self.hp = 3
+        self.hp = hp
+        self.max_hp = hp
         self.speed = 2
         self.alive = True
     
@@ -123,7 +132,7 @@ class Enemy:
         if self.alive:
             pygame.draw.rect(screen, RED, self.rect)
             pygame.draw.rect(screen, (0, 0, 0), (self.rect.x, self.rect.y - 5, 40, 6))
-            pygame.draw.rect(screen, GREEN, (self.rect.x, self.rect.y - 5, (self.hp / 3) * 40, 6))
+            pygame.draw.rect(screen, GREEN, (self.rect.x, self.rect.y - 5, (self.hp / self.max_hp) * 40, 6))
 
 class Bullet:
     def __init__(self, x, y, target, damage, color, speed=10, is_sniper=False):
@@ -165,8 +174,9 @@ class Bullet:
                 pygame.draw.circle(screen, self.color, (int(self.pos[0]), int(self.pos[1])), 10)
 
 def spawn_enemies():
+    base_hp = 3 * (1 + 0.3 * (wave - 1))
     for i in range(enemies_per_wave):
-        enemies.append(Enemy(i * 80))  # Increased delay to add space between enemies
+        enemies.append(Enemy(i * 80, base_hp))  # Increased delay to add space between enemies
 
 def draw_menu():
     screen.fill(WHITE)
