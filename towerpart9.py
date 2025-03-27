@@ -224,6 +224,7 @@ def draw_difficulty_menu():
 
 running = True
 start_button, exit_button = draw_menu()
+paused = False
 
 while running:
     if in_menu:
@@ -255,110 +256,120 @@ while running:
                     difficulty_selected = False
                     spawn_enemies()
     else:
-        screen.fill(WHITE)
-        scaled_background = pygame.transform.scale(background_image, (WIDTH - 200, HEIGHT))
-        screen.blit(scaled_background, (0, 0))  # Draw background image within game area
-        pygame.draw.rect(screen, BLACK, (WIDTH - 200, 0, 200, HEIGHT))
-        pygame.draw.rect(screen, BLACK, (0, 0, WIDTH - 200, HEIGHT), 5)
-        
-        for i in range(len(path) - 1):
-            pygame.draw.line(screen, GRAY, path[i], path[i + 1], 10)
-        
-        font = pygame.font.Font(None, 60)
-        screen.blit(font.render(f"Money: ${money}", True, (0, 0, 0)), (10, 10))
-        screen.blit(font.render(f"Wave: {wave}", True, (0, 0, 0)), (10, 80))
-        
-        if game_over:
-            screen.blit(font.render("Game Over!", True, RED), (WIDTH // 2 - 100, HEIGHT // 2))
-            pygame.display.flip()
-            pygame.time.delay(2000)
-            in_menu = True
-            start_button, exit_button = draw_menu()
-            continue
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if selected_tower and money >= selected_tower["cost"]:
-                    for i, slot in enumerate(tower_slots):
-                        slot_rect = pygame.Rect(slot[0], slot[1], 50, 50)
-                        if slot_rect.collidepoint(event.pos):
-                            # Replace the tower if the slot is already occupied
-                            for j, tower in enumerate(towers):
-                                if tower["pos"] == slot:
-                                    towers.pop(j)
-                                    break
-                            towers.append({"pos": slot, "type": selected_tower, "shooting": False})
-                            money -= selected_tower["cost"]
-                            selected_tower = None
-                            occupied_slots[i] = True
-                            break
-                else:
-                    for i, button in enumerate(tower_buttons):
-                        if button.collidepoint(event.pos):
-                            selected_tower = TOWER_TYPES[i]
-        
-        for enemy in enemies[:]:
-            if enemy.alive:
-                enemy.move()
-                enemy.draw()
-            else:
-                enemies.remove(enemy)
-        
-        if not enemies and not game_over:
-            wave += 1
-            spawn_enemies()
-        
-        for tower in towers:
-            if "image" in tower["type"]:
-                screen.blit(tower["type"]["image"], (tower["pos"][0] - tower["type"]["image"].get_width() // 2, tower["pos"][1] - tower["type"]["image"].get_height() // 2))
-                if tower["shooting"]:
-                    screen.blit(tower["type"]["weapon_shooting_image"], (tower["pos"][0] - tower["type"]["weapon_shooting_image"].get_width() // 2, tower["pos"][1] - tower["type"]["weapon_shooting_image"].get_height() // 2))
-                else:
-                    screen.blit(tower["type"]["weapon_idle_image"], (tower["pos"][0] - tower["type"]["weapon_idle_image"].get_width() // 2, tower["pos"][1] - tower["type"]["weapon_idle_image"].get_height() // 2))
-            else:
-                pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 20)
-            
-            if random.random() < tower["type"]["fire_rate"] and any(enemy.alive for enemy in enemies):
-                target = next((e for e in enemies if e.alive), None)  # Select the first alive enemy
-                if target:
-                    if tower["type"]["name"] == "Sniper Tower":
-                        bullet_color = RED
-                        bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color, speed=10, is_sniper=True))
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:  # Toggle pause with the 'P' key
+                    paused = not paused
+
+            if not paused:  # Only process events if the game is not paused
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if selected_tower and money >= selected_tower["cost"]:
+                        for i, slot in enumerate(tower_slots):
+                            slot_rect = pygame.Rect(slot[0], slot[1], 50, 50)
+                            if slot_rect.collidepoint(event.pos):
+                                # Replace the tower if the slot is already occupied
+                                for j, tower in enumerate(towers):
+                                    if tower["pos"] == slot:
+                                        towers.pop(j)
+                                        break
+                                towers.append({"pos": slot, "type": selected_tower, "shooting": False})
+                                money -= selected_tower["cost"]
+                                selected_tower = None
+                                occupied_slots[i] = True
+                                break
                     else:
-                        if tower["type"]["name"] == "Rapid Tower":
-                            bullet_color = GREEN
-                        elif tower["type"]["name"] == "Splash Tower":
-                            bullet_color = SAND
-                        elif tower["type"]["name"] == "Freeze Tower":
-                            bullet_color = PURPLE
+                        for i, button in enumerate(tower_buttons):
+                            if button.collidepoint(event.pos):
+                                selected_tower = TOWER_TYPES[i]
+
+        if not paused:  # Only update the game if not paused
+            screen.fill(WHITE)
+            scaled_background = pygame.transform.scale(background_image, (WIDTH - 200, HEIGHT))
+            screen.blit(scaled_background, (0, 0))  # Draw background image within game area
+            pygame.draw.rect(screen, BLACK, (WIDTH - 200, 0, 200, HEIGHT))
+            pygame.draw.rect(screen, BLACK, (0, 0, WIDTH - 200, HEIGHT), 5)
+            
+            for i in range(len(path) - 1):
+                pygame.draw.line(screen, GRAY, path[i], path[i + 1], 10)
+            
+            font = pygame.font.Font(None, 60)
+            screen.blit(font.render(f"Money: ${money}", True, (0, 0, 0)), (10, 10))
+            screen.blit(font.render(f"Wave: {wave}", True, (0, 0, 0)), (10, 80))
+            
+            if game_over:
+                screen.blit(font.render("Game Over!", True, RED), (WIDTH // 2 - 100, HEIGHT // 2))
+                pygame.display.flip()
+                pygame.time.delay(2000)
+                in_menu = True
+                start_button, exit_button = draw_menu()
+                continue
+            
+            for enemy in enemies[:]:
+                if enemy.alive:
+                    enemy.move()
+                    enemy.draw()
+                else:
+                    enemies.remove(enemy)
+            
+            if not enemies and not game_over:
+                wave += 1
+                spawn_enemies()
+            
+            for tower in towers:
+                if "image" in tower["type"]:
+                    screen.blit(tower["type"]["image"], (tower["pos"][0] - tower["type"]["image"].get_width() // 2, tower["pos"][1] - tower["type"]["image"].get_height() // 2))
+                    if tower["shooting"]:
+                        screen.blit(tower["type"]["weapon_shooting_image"], (tower["pos"][0] - tower["type"]["weapon_shooting_image"].get_width() // 2, tower["pos"][1] - tower["type"]["weapon_shooting_image"].get_height() // 2))
+                    else:
+                        screen.blit(tower["type"]["weapon_idle_image"], (tower["pos"][0] - tower["type"]["weapon_idle_image"].get_width() // 2, tower["pos"][1] - tower["type"]["weapon_idle_image"].get_height() // 2))
+                else:
+                    pygame.draw.circle(screen, tower["type"]["color"], tower["pos"], 20)
+                
+                if random.random() < tower["type"]["fire_rate"] and any(enemy.alive for enemy in enemies):
+                    target = next((e for e in enemies if e.alive), None)  # Select the first alive enemy
+                    if target:
+                        if tower["type"]["name"] == "Sniper Tower":
+                            bullet_color = RED
+                            bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color, speed=10, is_sniper=True))
                         else:
-                            bullet_color = BLUE
-                        bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color))
-                    tower["shooting"] = True
-            else:
-                tower["shooting"] = False
+                            if tower["type"]["name"] == "Rapid Tower":
+                                bullet_color = GREEN
+                            elif tower["type"]["name"] == "Splash Tower":
+                                bullet_color = SAND
+                            elif tower["type"]["name"] == "Freeze Tower":
+                                bullet_color = PURPLE
+                            else:
+                                bullet_color = BLUE
+                            bullets.append(Bullet(tower["pos"][0], tower["pos"][1], target, tower["type"]["damage"], bullet_color))
+                        tower["shooting"] = True
+                else:
+                    tower["shooting"] = False
+            
+            for bullet in bullets:
+                if bullet.active:
+                    bullet.move()
+                    bullet.check_collision()
+                    bullet.draw()
+            
+            bullets = [bullet for bullet in bullets if bullet.active]
+            
+            for i, tower in enumerate(TOWER_TYPES):
+                rect = tower_buttons[i]
+                pygame.draw.rect(screen, tower["color"], rect)
+                font = pygame.font.Font(None, 30)  # Decrease font size to 30
+                text = font.render(f'{tower["name"]} ${tower["cost"]}', True, (0, 0, 0))
+                text_rect = text.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
+                screen.blit(text, text_rect)
+            
+            # Draw tower slots
+            for slot in tower_slots:
+                pygame.draw.rect(screen, GRAY, (slot[0], slot[1], 50, 50), 2)
         
-        for bullet in bullets:
-            if bullet.active:
-                bullet.move()
-                bullet.check_collision()
-                bullet.draw()
-        
-        bullets = [bullet for bullet in bullets if bullet.active]
-        
-        for i, tower in enumerate(TOWER_TYPES):
-            rect = tower_buttons[i]
-            pygame.draw.rect(screen, tower["color"], rect)
-            font = pygame.font.Font(None, 30)  # Decrease font size to 30
-            text = font.render(f'{tower["name"]} ${tower["cost"]}', True, (0, 0, 0))
-            text_rect = text.get_rect(center=(rect.x + rect.width // 2, rect.y + rect.height // 2))
-            screen.blit(text, text_rect)
-        
-        # Draw tower slots
-        for slot in tower_slots:
-            pygame.draw.rect(screen, GRAY, (slot[0], slot[1], 50, 50), 2)
+        elif paused:  # Display pause message
+            font = pygame.font.Font(None, 100)
+            screen.blit(font.render("Paused", True, RED), (WIDTH // 2 - 100, HEIGHT // 2))
         
         pygame.display.flip()
         pygame.time.delay(30)
