@@ -372,6 +372,6 @@ while running:
             screen.blit(font.render("Paused", True, RED), (WIDTH // 2 - 100, HEIGHT // 2))
         
         pygame.display.flip()
-        pygame.time.delay(30)
+        pygame.time.delay(10)
 
 pygame.quit()
