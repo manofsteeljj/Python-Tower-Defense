@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import os
 
 pygame.init()
 
@@ -78,6 +79,9 @@ game_over = False
 in_menu = True
 difficulty_selected = False
 difficulty = "Easy"
+
+score = 0
+high_scores = []
 
 # Define tower slots
 tower_slots = [
@@ -170,8 +174,9 @@ class Bullet:
             self.target.hp -= self.damage
             if self.target.hp <= 0:
                 self.target.alive = False
-                global money
+                global money, score
                 money += 50
+                score += 10  # Add points for defeating an enemy
             self.active = False
     
     def draw(self):
@@ -222,8 +227,61 @@ def draw_difficulty_menu():
     pygame.display.flip()
     return easy_button, medium_button, hard_button
 
-running = True
+def draw_welcome_screen():
+    screen.fill(WHITE)
+    font_title = pygame.font.Font(None, 120)
+    font_message = pygame.font.Font(None, 60)
+    title_text = font_title.render("Tower Defense Game", True, BLACK)
+    message_text = font_message.render("Press any key to continue", True, GRAY)
+    screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 3))
+    screen.blit(message_text, (WIDTH // 2 - message_text.get_width() // 2, HEIGHT // 2))
+    pygame.display.flip()
+
+def load_high_scores():
+    global high_scores
+    if os.path.exists("scores.txt"):
+        with open("scores.txt", "r") as file:
+            high_scores = [int(line.strip()) for line in file.readlines()]
+    else:
+        high_scores = []
+
+def save_high_scores():
+    global high_scores
+    with open("scores.txt", "w") as file:
+        for score in high_scores:
+            file.write(f"{score}\n")
+
+def draw_leaderboard():
+    screen.fill(WHITE)
+    font_title = pygame.font.Font(None, 100)
+    font_score = pygame.font.Font(None, 60)
+    title_text = font_title.render("Leaderboard", True, BLACK)
+    screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 50))
+
+    for i, score in enumerate(high_scores):
+        score_text = font_score.render(f"{i + 1}. {score}", True, BLACK)
+        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 150 + i * 50))
+
+    pygame.display.flip()
+    pygame.time.delay(5000)  # Display for 5 seconds
+
+# Show the welcome screen
+show_welcome = True
+while show_welcome:
+    draw_welcome_screen()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        if event.type == pygame.KEYDOWN:
+            show_welcome = False
+
+# Proceed to the main menu
 start_button, exit_button = draw_menu()
+
+load_high_scores()
+
+running = True
 paused = False
 
 while running:
@@ -299,6 +357,10 @@ while running:
             screen.blit(font.render(f"Wave: {wave}", True, (0, 0, 0)), (10, 80))
             
             if game_over:
+                high_scores.append(score)
+                high_scores = sorted(high_scores, reverse=True)[:5]
+                save_high_scores()
+                draw_leaderboard()
                 screen.blit(font.render("Game Over!", True, RED), (WIDTH // 2 - 100, HEIGHT // 2))
                 pygame.display.flip()
                 pygame.time.delay(2000)
@@ -352,7 +414,8 @@ while running:
                     bullet.move()
                     bullet.check_collision()
                     bullet.draw()
-            
+
+            # Corrected list comprehension
             bullets = [bullet for bullet in bullets if bullet.active]
             
             for i, tower in enumerate(TOWER_TYPES):
